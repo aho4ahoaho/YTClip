@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProcessStatus {
+  Processed
+  Processing
+  NoProcessed
+}
+
+model Video {
+  id            Int           @id @default(autoincrement())
+  videoId       String        @unique @map("video_id")
+  processed     ProcessStatus @default(NoProcessed)
+  fileName      String?       @map("file_name")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  clips         Clip[]
+  thumbnail     String?       @map("thumbnail")
+  detail        VideoDetail?  @relation(fields: [videoDetailId], references: [id])
+  videoDetailId Int?
+}
+
+model Clip {
+  id          Int           @id @default(autoincrement())
+  start       Int
+  end         Int
+  processed   ProcessStatus @default(NoProcessed)
+  fileName    String?       @map("file_name")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  Video       Video?        @relation(fields: [videoDataId], references: [id])
+  videoDataId Int?
+}
+
+model VideoDetail {
+  id          Int         @id @default(autoincrement())
+  title       String
+  duration    Int
+  channelId   String      @map("channel_id")
+  author      String
+  description String      @db.VarChar(1000)
+  thumbnails  Thumbnail[]
+  Video       Video[]
+}
+
+model Thumbnail {
+  id            Int          @id @default(autoincrement())
+  url           String
+  width         Int
+  height        Int
+  videoDetailId Int?
+  VideoDetail   VideoDetail? @relation(fields: [videoDetailId], references: [id])
+}
