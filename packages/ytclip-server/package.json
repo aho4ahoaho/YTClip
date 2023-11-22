@@ -14,7 +14,9 @@
 		"dev": "bun --watch index.ts",
 		"lint": "biome check .",
 		"fix": "biome check --apply-unsafe .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"add":"bun add",
+		"remove":"bun remove"
 	},
 	"dependencies": {
 		"@distube/ytdl-core": "^4.13.3",
