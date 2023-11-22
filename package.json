@@ -14,6 +14,8 @@
   "private": true,
   "scripts": {
     "client": "bun --cwd packages/ytclip-client",
-    "server": "bun --cwd packages/ytclip-server"
+    "server": "bun --cwd packages/ytclip-server",
+    "db": "bun --cwd packages/ytclip-db",
+    "migrate":"bun db prisma migrate dev && bun db prisma generate"
   }
 }
