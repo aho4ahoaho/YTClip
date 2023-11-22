@@ -1,10 +1,9 @@
 <script>
-	import "../app.pcss";
-    import './styles.css';
+	import './styles.css';
 </script>
 
 <div class="app">
 	<main>
-		<slot></slot>
+		<slot />
 	</main>
 </div>
