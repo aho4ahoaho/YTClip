@@ -37,8 +37,8 @@ model Clip {
   fileName    String?       @map("file_name")
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
-  Video       Video?        @relation(fields: [videoDataId], references: [id])
-  videoDataId Int?
+  Video       Video         @relation(fields: [videoDataId], references: [id])
+  videoDataId Int
 }
 
 model VideoDetail {
@@ -53,10 +53,10 @@ model VideoDetail {
 }
 
 model Thumbnail {
-  id            Int          @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   url           String
   width         Int
   height        Int
-  videoDetailId Int?
-  VideoDetail   VideoDetail? @relation(fields: [videoDetailId], references: [id])
+  videoDetailId Int
+  VideoDetail   VideoDetail @relation(fields: [videoDetailId], references: [id])
 }
