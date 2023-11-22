@@ -1,5 +1,5 @@
 {
-  "name": "ytclip-server",
+  "name": "@ytclip/server",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
@@ -8,10 +8,15 @@
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
+  "scripts": {
+    "start": "bun index.ts",
+    "dev": "bun --watch index.ts"
+  },
   "dependencies": {
+    "@distube/ytdl-core": "^4.13.3",
+    "@types/express": "^4.17.21",
     "@types/fluent-ffmpeg": "^2.1.24",
     "express": "^4.18.2",
-    "fluent-ffmpeg": "^2.1.2",
-    "ytdl-core": "^4.11.5"
+    "fluent-ffmpeg": "^2.1.2"
   }
 }
