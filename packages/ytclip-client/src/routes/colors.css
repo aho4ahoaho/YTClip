@@ -1,0 +1,20 @@
+:root {
+	--primary: #3b5998;
+	--primary-text: #ffffff;
+	--primary-hover: #2d4373;
+	--primary-active: #23345a;
+	--secondary: #ffffff;
+	--secondary-text: #333;
+	--secondary-hover: #f2f2f2;
+	--secondary-active: #e6e6e6;
+	--tertiary: #000000;
+	--tertiary-text: #ffffff;
+	--tertiary-hover: #1a1a1a;
+	--tertiary-active: #333333;
+	--danger: #ffc107;
+	--danger-text: #333;
+	--danger-hover: #e0a800;
+	--danger-active: #b38f00;
+	--dark: #333333;
+	--light: #f2f2f2;
+}

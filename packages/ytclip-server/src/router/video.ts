@@ -8,14 +8,13 @@ import { safeNumber } from "../lib";
 import { AddQueueFFmpeg, ProcessFFmpeg } from "../lib/ffmpeg";
 import { FileOrganizer } from "../lib/file";
 import { Logger } from "../lib/logger";
-import { getQueryString } from "../lib/url";
 
 const router = Router();
 const fileOrganizer = new FileOrganizer("videos");
 const prisma = new PrismaClient();
 
 router.get("/getinfo", (req, res) => {
-    const url = getQueryString(req.query.url);
+    const url = String(req.query.url);
     if (!url) {
         res.status(400).send("No URL provided");
         return;
@@ -33,8 +32,39 @@ router.get("/getinfo", (req, res) => {
         });
 });
 
+router.get("/get", async (req, res) => {
+    const videoId = String(req.query.videoId);
+    const detail = String(req.query.detail) === "true";
+    const clips = String(req.query.clips) === "true";
+    if (!videoId) {
+        res.status(400).send("No videoId provided");
+        return;
+    }
+    const data = await prisma.video.findUnique({
+        where: {
+            videoId,
+        },
+        include: {
+            detail: detail,
+            clips: clips,
+        }
+    });
+    res.send(data);
+});
+
+router.get("/list", async (req, res) => {
+    const data = await prisma.video.findMany({
+        select: {
+            videoId: true,
+            title: true,
+            thumbnail: true,
+        },
+    });
+    res.send(data);
+});
+
 router.get("/add", async (req, res) => {
-    const url = getQueryString(req.query.url);
+    const url = String(req.query.url);
     if (!url) {
         res.status(400).send("No URL provided");
         return;
@@ -68,9 +98,9 @@ router.get("/add", async (req, res) => {
     const data: Prisma.VideoCreateInput = {
         videoId: videoId,
         thumbnail: thumbnails[thumbnails.length - 1].url,
+        title: videoInfo.videoDetails.title,
         detail: {
             create: {
-                title: videoInfo.videoDetails.title,
                 description: videoInfo.videoDetails.description?.substring(0, 255) ?? "",
                 duration: safeNumber(videoInfo.videoDetails.lengthSeconds) ?? 0,
                 channelId: videoInfo.videoDetails.channelId,
@@ -92,7 +122,7 @@ router.get("/add", async (req, res) => {
 });
 
 router.delete("/delete", async (req, res) => {
-    const videoId = getQueryString(req.query.videoId);
+    const videoId = String(req.query.videoId);
     if (!videoId || !ytdl.validateID(videoId)) {
         res.status(400).send("No videoId provided");
         return;
@@ -117,7 +147,7 @@ router.delete("/delete", async (req, res) => {
 });
 
 router.get("/download", async (req, res) => {
-    const videoId = getQueryString(req.query.videoId);
+    const videoId = String(req.query.videoId);
     if (!videoId) {
         res.status(400).send("No videoId provided");
         return;
@@ -211,7 +241,7 @@ router.get("/download", async (req, res) => {
                     .input(videoPath)
                     .input(audioPath)
                     .videoCodec(videoType === "mp4" ? "copy" : "mp4")
-                    .audioCodec("copy")
+                    .audioCodec("aac")
                     .on("end", () => {
                         Logger.log("FFmpeg CMD", `${videoId}.mp4 conversion finished.`);
                         resolve();

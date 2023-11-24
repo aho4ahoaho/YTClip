@@ -1,7 +1,12 @@
 {
     "$schema": "https://biomejs.dev/schemas/1.3.3/schema.json",
     "files": {
-        "ignore": ["node_modules/**/*", "**/*.min.js", "**/*.map"]
+        "ignore": [
+            "node_modules/**/*",
+            "**/*.min.js",
+            "**/*.map",
+            "shaka.ts"
+        ]
     },
     "linter": {
         "enabled": true,

@@ -21,6 +21,7 @@ model Video {
   videoId       String        @unique @map("video_id")
   processed     ProcessStatus @default(NoProcessed)
   fileName      String?       @map("file_name")
+  title         String
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
   clips         Clip[]
@@ -33,6 +34,7 @@ model Clip {
   id          Int           @id @default(autoincrement())
   start       Int
   end         Int
+  memo        String        @default("")
   processed   ProcessStatus @default(NoProcessed)
   fileName    String?       @map("file_name")
   createdAt   DateTime      @default(now()) @map("created_at")
@@ -43,7 +45,6 @@ model Clip {
 
 model VideoDetail {
   id          Int         @id @default(autoincrement())
-  title       String
   duration    Int
   channelId   String      @map("channel_id")
   author      String

@@ -35,7 +35,7 @@ router.get("/get", async (req, res) => {
     });
     res.send({
         videoId: videoId,
-        detail: data,
+        ...data,
     });
 });
 
@@ -80,15 +80,9 @@ router.put("/create", async (req, res) => {
     });
     console.log(duplicateClip);
 
-    let clipId: number | undefined;
     if (duplicateClip) {
-        if (duplicateClip?.processed === ProcessStatus.NoProcessed) {
-            //既存のクリップを更新
-            clipId = duplicateClip.id;
-        } else {
-            res.status(400).send("Clip already exists");
-            return;
-        }
+        res.status(400).send("Clip already exists");
+        return;
     } else {
         //新しいクリップを作成
         const newClip: Prisma.ClipCreateManyVideoInput = {
@@ -117,11 +111,43 @@ router.put("/create", async (req, res) => {
                 },
             },
         });
-        clipId = clipData.clips[0].id;
+        res.send(clipData.clips[0]);
     }
+});
+
+router.get("/process", async (req, res) => {
+    const clipId = safeNumber(req.query.clipId);
+    if (!clipId) {
+        res.status(400).send("No clipId provided");
+        return;
+    }
+    const clip = await prisma.clip.findUnique({
+        where: {
+            id: clipId,
+        },
+        select: {
+            processed: true,
+            start: true,
+            end: true,
+            Video: {
+                select: {
+                    videoId: true,
+                    fileName: true,
+                }
+            },
+        }
+    });
+    if (clip?.processed !== ProcessStatus.NoProcessed) {
+        res.status(400).send("Clip already processed");
+        return;
+    } else if (!clip?.Video.fileName) {
+        res.status(400).send("Clip not found");
+        return;
+    }
+    const { start, end, Video: { fileName, videoId } } = clip;
 
     const clipName = `${videoId}_${start}-${end}.mp4`;
-    const videoPath = videoFileOrganizer.getPath(videoData.fileName);
+    const videoPath = videoFileOrganizer.getPath(fileName);
     const clipPath = clipFileOrganizer.getPath(clipName);
     Logger.debug(`Start converting ${clipName}...`);
     const ffmpegCmd = ffmpeg()
@@ -132,9 +158,8 @@ router.put("/create", async (req, res) => {
         .on("start", (cmd) => {
             Logger.debug("FFmpeg CMD", cmd);
         })
-        .on("end", () => {
-            Logger.debug(`${clipName} conversion finished.`);
-            prisma.clip.update({
+        .on("end", async () => {
+            await prisma.clip.update({
                 where: {
                     id: clipId,
                 },
@@ -142,12 +167,12 @@ router.put("/create", async (req, res) => {
                     processed: ProcessStatus.Processed,
                     fileName: clipName,
                 },
-            });
+            }).catch((e) => Logger.error(e));
+            Logger.debug(`${clipName} conversion finished.`);
         });
     AddQueueFFmpeg(ffmpegCmd);
     ProcessFFmpeg();
-
-    res.send("OK");
+    res.send(clip);
 });
 
 router.delete("/delete", async (req, res) => {

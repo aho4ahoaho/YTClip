@@ -1,0 +1,23 @@
+FROM alpine:latest
+
+WORKDIR /app
+
+RUN wget https://nginx.org/download/nginx-1.25.1.tar.gz -O nginx.tar.gz && tar -xvf nginx.tar.gz && mv nginx-*/ nginx && rm -rf nginx.tar.gz
+RUN wget https://github.com/kaltura/nginx-vod-module/archive/refs/heads/master.zip && unzip master.zip && mv nginx-vod-module-master nginx-vod-module && rm -rf master.zip
+RUN wget https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v0.34.tar.gz && tar -xvf v0.34.tar.gz && mv headers-more-nginx-module-0.34 headers-more-nginx-module && rm -rf v0.34.tar.gz
+# 必要パッケージのインストール、nginxのビルド、不要なファイルの削除
+RUN apk update && apk add pcre-dev build-base make zlib-dev openssl-dev linux-headers\
+    && cd nginx && ./configure --add-module=../nginx-vod-module --add-module=../headers-more-nginx-module \
+    --prefix=/etc/nginx/ --sbin-path=/usr/local/sbin/nginx --http-log-path=/var/log/nginx/access.log --error-log-path=/var/log/nginx/error.log \
+    --with-http_ssl_module --with-http_v2_module --with-http_mp4_module --with-http_realip_module \
+    --with-file-aio --with-threads --with-cc-opt="-O3 -mpopcnt -DNGX_VOD_MAX_TRACK_COUNT=256 -mavx2" \
+    && make && make install && apk del build-base make linux-headers && rm -rf /var/cache/apk/* && rm -rf /app
+
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log
+
+CMD [ "nginx", "-g", "daemon off;" ]
+
+# Thanks
+# http://mogile.web.fc2.com/nginx/configure.html
+# https://github.com/LoicMahieu/alpine-nginx

@@ -19,6 +19,9 @@ app.get("/", (req, res) => {
 app.use("/clip", ClipRouter);
 app.use("/video", VideoRouter);
 
+app.use("/videos", Express.static("videos"));
+app.use("/clips", Express.static("clips"));
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  nginx:
+    build:
+      context: ./packages/
+      dockerfile: ./ytclip-proxy/Dockerfile
+    container_name: ${CONTAINER_PREFIX}ytclip-nginx
+    ports:
+      - "8083:80"
+    volumes:
+      - ./packages/ytclip-proxy/nginx.conf:/etc/nginx/conf/nginx.conf
+      - ./packages/ytclip-server/clips:/var/www/clips
+      - ./packages/ytclip-server/videos:/var/www/videos
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    image: mariadb:11
+    container_name: ${CONTAINER_PREFIX}ytclip-db
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}
+      - MARIADB_DATABASE=${CONTAINER_PREFIX}ytclip
+    ports:
+      - "23306:3306"
+    volumes:
+      - ./packages/ytclip-db/mysql:/var/lib/mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,7 @@
+:root {
+	--border: 0.075rem solid var(--dark);
+	--border-radius: 0.25rem;
+}
+* {
+	margin: 0;
+}
