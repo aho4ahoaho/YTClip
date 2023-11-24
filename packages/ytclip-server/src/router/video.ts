@@ -4,10 +4,13 @@ import ytdl from "@distube/ytdl-core";
 import { Prisma, PrismaClient, ProcessStatus } from "@ytclip/database";
 import { Router } from "express";
 import ffmpeg from "fluent-ffmpeg";
-import { safeNumber } from "../lib";
+import { safeNumber, youtubeDl } from "../lib";
 import { AddQueueFFmpeg, ProcessFFmpeg } from "../lib/ffmpeg";
 import { FileOrganizer } from "../lib/file";
 import { Logger } from "../lib/logger";
+import { execAsync } from "../lib/index";
+import path from "path";
+
 
 const router = Router();
 const fileOrganizer = new FileOrganizer("videos");
@@ -161,12 +164,29 @@ router.get("/download", async (req, res) => {
             videoId,
         },
     });
+
     if (!video) {
         res.status(400).send("Video not found");
         return;
-    } else if (video.processed !== ProcessStatus.NoProcessed) {
-        res.status(400).send("Video already processed");
-        return;
+    }
+    switch (video?.processed) {
+        case ProcessStatus.Processed:
+            res.status(400).send("Video already processed");
+            return;
+        case ProcessStatus.Processing:
+            res.status(400).send("Video already processing");
+            return;
+        case ProcessStatus.Error:
+            //削除して再ダウンロード
+            Logger.log("DeleteErrorVideo", videoId);
+            try {
+                fs.unlinkSync(fileOrganizer.getPath(videoId));
+            } catch (err) {
+                Logger.error("DeleteErrorVideo", err);
+            }
+        case ProcessStatus.NoProcessed:
+            //何もしない
+            break;
     }
 
     await prisma.video.update({
@@ -180,114 +200,50 @@ router.get("/download", async (req, res) => {
 
     const url = `https://youtu.be/${videoId}`;
     const videoInfo = await ytdl.getInfo(url);
-    const videoFormat = ytdl.chooseFormat(videoInfo.formats, { quality: "highestvideo" });
-    const audioFormat = ytdl.chooseFormat(videoInfo.formats, { quality: "highestaudio" });
-    const videoUrl = videoFormat.url;
-    const audioUrl = audioFormat.url;
+    const videoPath = fileOrganizer.getPath(videoId);
 
-    const videoType = videoFormat.container;
-    const audioType = audioFormat.container;
-    const videoFileName = `${videoId}.video.${videoType}`;
-    const audioFileName = `${videoId}.audio.${audioType}`;
-    const videoPath = fileOrganizer.getPath(videoFileName);
-    const audioPath = fileOrganizer.getPath(audioFileName);
-    const videoFileStream = fileOrganizer.getWriteStream(videoFileName);
-    const audioFileStream = fileOrganizer.getWriteStream(audioFileName);
 
-    Logger.log(`Starting ${videoFileName} download. Video format: ${videoFormat.codecs} ${videoFormat.qualityLabel}.`);
-    const videoPromise = new Promise<void>((resolve, reject) => {
-        https
-            .get(videoUrl, (res) => {
-                res.pipe(videoFileStream);
-                res.on("end", () => {
-                    Logger.log(`${videoFileName} download finished.`);
-                    resolve();
-                });
-                res.on("error", (err) => {
-                    Logger.error("VideoDL", err);
-                    reject(err);
-                });
-            })
-            .on("error", (err) => {
+    Logger.log(`Starting ${videoInfo.videoDetails.title} download.`);
+    youtubeDl(url, videoPath).then(({ filepath }) => {
+        Logger.log("yt-dlp", `${videoInfo.videoDetails.title} download finished.`);
+        const fileName = path.basename(filepath).split(".").slice(0, -1).join(".");
+        const dirName = path.dirname(filepath);
+        const videoPath = path.join(dirName, `${fileName}.mp4`);
+
+        const convertPromise: Promise<string> = new Promise((resolve, reject) => {
+            ffmpeg(filepath).videoCodec("copy").audioCodec("aac").save(videoPath).on("end", () => {
+                fs.unlinkSync(filepath);
+                resolve(`${fileName}.mp4`);
+            }).on("error", (err) => {
+                Logger.error("ffmpeg", err);
                 reject(err);
-            });
-    });
-
-    Logger.log(`Starting ${audioFileName} download. Audio format: ${audioFormat.codecs} ${audioFormat.quality}.`);
-    const audioPromise = new Promise<void>((resolve, reject) => {
-        https
-            .get(audioUrl, (res) => {
-                res.pipe(audioFileStream);
-                res.on("end", () => {
-                    Logger.log(`${audioFileName} download finished.`);
-                    resolve();
-                });
-                res.on("error", (err) => {
-                    Logger.error("AudioDL", err);
-                    reject(err);
-                });
-            })
-            .on("error", (err) => {
-                reject(err);
-            });
-    });
-
-    Promise.all([videoPromise, audioPromise])
-        .then(() => {
-            Logger.log(`Starting ${videoId}.mp4 conversion.`);
-
-            return new Promise<void>((resolve, reject) => {
-                const ffmpegCmd = ffmpeg()
-                    .input(videoPath)
-                    .input(audioPath)
-                    .videoCodec(videoType === "mp4" ? "copy" : "mp4")
-                    .audioCodec("aac")
-                    .on("end", () => {
-                        Logger.log("FFmpeg CMD", `${videoId}.mp4 conversion finished.`);
-                        resolve();
-                    })
-                    .on("start", (cmd) => Logger.debug(cmd))
-                    .on("error", (err, stdout, stderr) => {
-                        Logger.error("ConvertError", err);
-                        Logger.error(stdout);
-                        Logger.error(stderr);
-                        reject(err);
-                    })
-                    .output(fileOrganizer.getPath(`${videoId}.mp4`));
-                AddQueueFFmpeg(ffmpegCmd);
-                ProcessFFmpeg();
-            });
-        })
-        .then(() => {
-            fs.unlinkSync(fileOrganizer.getPath(videoFileName));
-            fs.unlinkSync(fileOrganizer.getPath(audioFileName));
-
-            return prisma.video.update({
-                where: {
-                    videoId,
-                },
-                data: {
-                    processed: ProcessStatus.Processed,
-                    fileName: `${videoId}.mp4`,
-                },
-            });
-        })
-        .catch((err) => {
-            Logger.error("DownloadError", err);
-            fs.unlinkSync(fileOrganizer.getPath(videoFileName));
-            fs.unlinkSync(fileOrganizer.getPath(audioFileName));
-
-            prisma.video.update({
-                where: {
-                    videoId,
-                },
-                data: {
-                    processed: ProcessStatus.NoProcessed,
-                    fileName: null,
-                },
             });
         });
+        return convertPromise;
+    }).then((fileName) => {
+        Logger.log("ffmpeg", `${videoId}.mp4 convert finished.`);
+        return prisma.video.update({
+            where: {
+                videoId,
+            },
+            data: {
+                processed: ProcessStatus.Processed,
+                fileName,
+            },
+        });
+    }).catch((err) => {
+        Logger.error("DownloadError", err);
 
+        prisma.video.update({
+            where: {
+                videoId,
+            },
+            data: {
+                processed: ProcessStatus.Error,
+                fileName: null,
+            },
+        });
+    });
     res.send("OK");
 });
 

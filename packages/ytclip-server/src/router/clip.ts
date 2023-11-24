@@ -39,7 +39,7 @@ router.get("/get", async (req, res) => {
     });
 });
 
-router.put("/create", async (req, res) => {
+router.post("/create", async (req, res) => {
     const videoId = getQueryString(req.query.videoId);
     const start = safeNumber(req.query.start);
     const end = safeNumber(req.query.end);
@@ -175,7 +175,7 @@ router.get("/process", async (req, res) => {
     res.send(clip);
 });
 
-router.delete("/delete", async (req, res) => {
+router.get("/delete", async (req, res) => {
     const videoId = getQueryString(req.query.videoId);
     const clipId = safeNumber(req.query.clipId);
     if (!videoId || !clipId) {

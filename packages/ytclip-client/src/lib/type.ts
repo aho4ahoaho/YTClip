@@ -1,4 +1,4 @@
-export type MouseElementEvent<T extends HTMLElement> = (
+export type MouseElementEventHandler<T extends HTMLElement> = (
 	e: MouseEvent & {
 		currentTarget: T & EventTarget;
 	}

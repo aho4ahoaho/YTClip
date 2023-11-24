@@ -2,7 +2,6 @@
 	import type { ResponseVideo } from '$lib/api';
 	import { formatTimes } from '$lib/time';
 	export let data: ResponseVideo | null = null;
-	$: console.log(data);
 	let className = '';
 	export { className as class };
 </script>
@@ -10,6 +9,20 @@
 {#if data}
 	<div class="{className} videoInfo">
 		<table>
+			{#if data.detail}
+				<tr>
+					<td> Title </td>
+					<td>{data.title}</td>
+				</tr>
+				<tr>
+					<td>Author</td>
+					<td>{data.detail.author}</td>
+				</tr>
+				<tr>
+					<td>Duration</td>
+					<td>{formatTimes(data.detail.duration)}</td>
+				</tr>
+			{/if}
 			<tr>
 				<td>ID</td>
 				<td>
@@ -26,19 +39,8 @@
 				<td>Status</td>
 				<td>{data.processed}</td>
 			</tr>
-			{#if data.detail}
-				<tr>
-					<td> Title </td>
-					<td>{data.title}</td>
-				</tr>
-				<tr>
-					<td>Author</td>
-					<td>{data.detail.author}</td>
-				</tr>
-				<tr>
-					<td>Duration</td>
-					<td>{formatTimes(data.detail.duration)}</td>
-				</tr>
+			{#if data.detail?.description}
+				<!-- nullチェックではなく表示順大切にしたいだけ -->
 				<tr>
 					<td>Description</td>
 					<td>{data.detail.description}</td>

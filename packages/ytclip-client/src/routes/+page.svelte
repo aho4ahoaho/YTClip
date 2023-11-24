@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { AddVideo,  GetVideoList, type ResponseVideo } from '$lib/api';
-	
+	import { VideoAPI, type ResponseVideo } from '$lib/api';
+
 	import Button from '../components/Button.svelte';
 	import InputText from '../components/InputText.svelte';
-	
+
 	import Card from '../components/Card.svelte';
 	import { onMount } from 'svelte';
 
@@ -15,7 +15,7 @@
 		thumbnail: string | null;
 	}[] = [];
 	const onLoad = () => {
-		GetVideoList().then((res) => {
+		VideoAPI.GetVideoList().then((res) => {
 			list = res;
 		});
 	};
@@ -36,15 +36,13 @@
 		<Button
 			class="w-fit"
 			onClick={async () => {
-				const resData = await AddVideo(value);
-				console.log(resData);
+				const resData = await VideoAPI.AddVideo(value);
 				if (typeof resData === 'string') {
 					alert(resData);
 					data = null;
 				} else {
 					value = '';
 					data = resData;
-					console.log(data);
 					onLoad();
 				}
 			}}>Submit</Button

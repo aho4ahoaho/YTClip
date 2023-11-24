@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AddVideo } from '$lib/api';
+	import { VideoAPI } from '$lib/api';
 	import Button from './Button.svelte';
 	import InputText from './InputText.svelte';
 
@@ -7,19 +7,24 @@
 </script>
 
 <header>
-	<a href="/">
-		<div class="text-xl">YTClip</div>
+	<a class="home" href="/">
+		<h1 class="text-xl">YTClip</h1>
 	</a>
 	<div class="w-0 flex-auto"></div>
 	<form
 		on:submit={(elm) => {
 			elm.preventDefault();
-			console.log(elm, url);
 			if (url.length > 0) {
-				AddVideo(url).catch((err) => {
-					console.error(err);
-					elm.currentTarget.classList.add('border-red-500');
-				});
+				VideoAPI.AddVideo(url)
+					.then(() => {
+						if (location.pathname === '/') {
+							location.reload();
+						}
+					})
+					.catch((err) => {
+						console.error(err);
+						elm.currentTarget.classList.add('border-red-500');
+					});
 			}
 		}}
 	>
@@ -31,5 +36,11 @@
 <style class="sass">
 	header {
 		@apply flex bg-black px-2 py-1 text-white;
+	}
+	a.home {
+		transition: filter 0.2s;
+		&:hover {
+			filter: drop-shadow(0.25rem 0.25rem 0.5rem white);
+		}
 	}
 </style>

@@ -10,12 +10,31 @@ const CLIP_URL = (() => {
 	return `${u}/`;
 })();
 
-export const getVideoURL = (fileName: string) => {
+const hlsPattern = /.*\.(mp4|avi|aac|mp3|ogg|flac|dts)/;
+const dashPattern = /.*\.(mkv|webm|opus)/;
+export type Source = {
+	src: string;
+	type: string;
+};
+export const getVideoURL = (fileName: string | null): Source[] => {
+	if (!fileName) return [];
 	const url = new URL(`${VIDEO_URL}${fileName.substring(0, 2).toLowerCase()}/${fileName}`);
-	if (url.pathname.endsWith('mp4')) {
-		url.pathname = `${url.pathname}/master.m3u8`;
+	const sources = [];
+	if (url.pathname.match(hlsPattern)) {
+		const hls_url = new URL(url);
+		hls_url.pathname = `${hls_url.pathname}/master.m3u8`;
+		sources.push({ src: hls_url.href, type: 'application/x-mpegURL' });
 	}
-	return url.href;
+	if (url.pathname.match(dashPattern)) {
+		const dash_url = new URL(url);
+		dash_url.pathname = `${dash_url.pathname}/manifest.mpd`;
+		sources.push({ src: dash_url.href, type: 'application/dash+xml' });
+	}
+	sources.push({
+		src: url.href,
+		type: `video/${url.pathname.split('.').pop()}`
+	});
+	return sources;
 };
 
 export const getClipURL = (fileName: string) => {

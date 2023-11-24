@@ -1,15 +1,13 @@
-export const formatTimes = (seconds: number): string => {
+export const formatTimes = (seconds: number, digits: number = 0): string => {
 	const hours = getHours(seconds);
 	const minutes = getMinutes(seconds) % 60;
-	const secondsLeft = seconds % 60;
+	const secondsLeft = (seconds % 60).toFixed(digits);
 	let result = '';
 	if (hours > 0) {
 		result += `${hours}:`;
 	}
-	if (minutes > 0) {
-		result += `${minutes.toString().padStart(2, '0')}:`;
-	}
-	result += `${secondsLeft.toString().padStart(2, '0')}`;
+
+	result += `${minutes.toString().padStart(2, '0')}:${secondsLeft.padStart(2, '0')}`;
 	return result;
 };
 

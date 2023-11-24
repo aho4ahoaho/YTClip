@@ -14,6 +14,7 @@ enum ProcessStatus {
   Processed
   Processing
   NoProcessed
+  Error
 }
 
 model Video {

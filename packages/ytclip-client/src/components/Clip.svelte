@@ -4,17 +4,21 @@
 	import Button from './Button.svelte';
 	import { LocaleFormatTimes } from '$lib/time';
 	import { getClipURL } from '$lib/url';
-	import { ProcessClip } from '$lib/api';
+	import { ClipAPI } from '$lib/api';
+	import type { MouseElementEventHandler } from '$lib/type';
 
-	export let clip: Pick<Clip, 'fileName' | 'processed' | 'start' | 'end' | 'id'>;
-	export let index: number;
+	export let clip: Pick<Clip, 'fileName' | 'processed' | 'start' | 'end' | 'id' | 'videoDataId'>;
 	export let player: Player | null = null;
+	export let videoId: string | null = null;
+	export let onDelete: MouseElementEventHandler<HTMLButtonElement> | undefined = undefined;
+
+	let className = '';
+	export { className as class };
 
 	$: clipDuration = clip.end - clip.start;
 </script>
 
-<div class="my-1 flex items-center gap-4">
-	<p class="text-lg">{index + 1}</p>
+<div class="my-1 flex items-center gap-4 {className}">
 	<Button
 		class="w-24"
 		onClick={() => {
@@ -35,9 +39,20 @@
 		<Button
 			class="ml-2 w-24"
 			onClick={() => {
-				ProcessClip(clip.id).catch(console.error);
+				ClipAPI.ProcessClip(clip.id).catch(console.error);
 			}}>切り出し</Button
 		>
 	{/if}
-	<p>{LocaleFormatTimes(clipDuration)}</p>
+	<p class="w-24">{LocaleFormatTimes(clipDuration)}</p>
+
+	<Button
+		class="ml-2 w-24"
+		color="danger"
+		onClick={(event) => {
+			if (!videoId) return;
+			ClipAPI.DeleteClip(videoId, clip.id).catch(console.error);
+			onDelete?.(event);
+		}}
+		disabled={!videoId}>削除</Button
+	>
 </div>

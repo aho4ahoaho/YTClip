@@ -14,7 +14,8 @@
 	onMount(() => {
 		player = videojs(videoElm, {
 			autoplay: true,
-			controls: true
+			controls: true,
+			fluid: true
 		});
 		srcs.length > 0 && player.src(srcs);
 
@@ -25,4 +26,6 @@
 </script>
 
 <!-- svelte-ignore a11y-media-has-caption -->
-<video class="{className} video-js" bind:this={videoElm}></video>
+<div class={className}>
+	<video class="video-js" bind:this={videoElm}></video>
+</div>
