@@ -12,6 +12,7 @@ services:
       - ./packages/ytclip-proxy/nginx.conf:/etc/nginx/conf/nginx.conf
       - ./packages/ytclip-server/clips:/var/www/clips
       - ./packages/ytclip-server/videos:/var/www/videos
+      - ./packages/ytclip-client/build:/var/www/html
     depends_on:
       - db
     networks:
