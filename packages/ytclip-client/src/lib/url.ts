@@ -1,13 +1,13 @@
 const VIDEO_URL = (() => {
-	const u = import.meta.env.VITE_VIDEO_URL;
-	if (u.endsWith('/')) return u;
-	return `${u}/`;
+	const u = import.meta.env.VITE_VIDEO_URL ?? window.location.origin + '/videos';
+	if (u.endsWith('/')) return u.substring(0, u.length - 1);
+	return u
 })();
 
 const CLIP_URL = (() => {
-	const u = import.meta.env.VITE_CLIP_URL;
-	if (u.endsWith('/')) return u;
-	return `${u}/`;
+	const u = import.meta.env.VITE_CLIP_URL ?? window.location.origin + '/clips';
+	if (u.endsWith('/')) return u.substring(0, u.length - 1);
+	return u
 })();
 
 const hlsPattern = /.*\.(mp4|avi|aac|mp3|ogg|flac|dts)/;
@@ -18,7 +18,7 @@ export type Source = {
 };
 export const getVideoURL = (fileName: string | null): Source[] => {
 	if (!fileName) return [];
-	const url = new URL(`${VIDEO_URL}${fileName.substring(0, 2).toLowerCase()}/${fileName}`);
+	const url = new URL(`${VIDEO_URL}/${fileName.substring(0, 2).toLowerCase()}/${fileName}`);
 	const sources = [];
 	if (url.pathname.match(hlsPattern)) {
 		const hls_url = new URL(url);
@@ -38,6 +38,6 @@ export const getVideoURL = (fileName: string | null): Source[] => {
 };
 
 export const getClipURL = (fileName: string) => {
-	const url = new URL(`${CLIP_URL}${fileName.substring(0, 2).toLowerCase()}/${fileName}`);
+	const url = new URL(`${CLIP_URL}/${fileName.substring(0, 2).toLowerCase()}/${fileName}`);
 	return url.href;
 };
