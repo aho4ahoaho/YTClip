@@ -1,0 +1,9 @@
+node_modules
+packages/ytclip-*/node_modules
+bun.lockb
+
+.env*
+packages/ytclip-*/.env*
+
+packages/ytclip-db/mysql
+packages/ytclip-*/Dockerfile
