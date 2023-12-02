@@ -19,6 +19,8 @@
 					.then(() => {
 						if (location.pathname === '/') {
 							location.reload();
+						} else {
+							url = '';
 						}
 					})
 					.catch((err) => {

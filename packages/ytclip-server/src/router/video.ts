@@ -176,6 +176,7 @@ router.get("/download", async (req, res) => {
         case ProcessStatus.Processing:
             res.status(400).send("Video already processing");
             return;
+        // biome-ignore lint/suspicious/noFallthroughSwitchClause: <explanation>
         case ProcessStatus.Error:
             //削除して再ダウンロード
             Logger.log("DeleteErrorVideo", videoId);
@@ -206,14 +207,14 @@ router.get("/download", async (req, res) => {
     Logger.log(`Starting ${videoInfo.videoDetails.title} download.`);
     youtubeDl(url, videoPath).then(({ filepath }) => {
         Logger.log("yt-dlp", `${videoInfo.videoDetails.title} download finished.`);
-        const fileName = path.basename(filepath).split(".").slice(0, -1).join(".");
+        const fileName = `${path.basename(filepath).split(".").slice(0, -1).join(".")}.mkv`;
         const dirName = path.dirname(filepath);
-        const videoPath = path.join(dirName, `${fileName}.mp4`);
+        const videoPath = path.join(dirName, fileName);
 
         const convertPromise: Promise<string> = new Promise((resolve, reject) => {
             ffmpeg(filepath).videoCodec("copy").audioCodec("aac").save(videoPath).on("end", () => {
                 fs.unlinkSync(filepath);
-                resolve(`${fileName}.mp4`);
+                resolve(fileName);
             }).on("error", (err) => {
                 Logger.error("ffmpeg", err);
                 reject(err);

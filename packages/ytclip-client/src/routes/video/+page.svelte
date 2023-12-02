@@ -9,6 +9,7 @@
 	import Clip from '../../components/Clip.svelte';
 	import Button from '../../components/Button.svelte';
 	import { formatTimes } from '$lib/time';
+	import InputTime from '../../components/InputTime.svelte';
 
 	const url = new URL(window.location.href);
 	const videoId = url.searchParams.get('id');
@@ -80,31 +81,56 @@
 	{/if}
 	<div class="text-lg font-semibold">新規クリップ</div>
 	<div class="mb-2 flex items-center gap-4">
-		<Button
-			class="h-12 w-64"
-			onClick={() => {
-				startTime = player?.currentTime() ?? null;
-			}}>開始ピン {startTime != null ? formatTimes(startTime, 1) : 'なし'}</Button
-		>
-		<Button
-			class="h-12 w-64"
-			disabled={endTime == null || startTime == null}
-			onClick={() => {
-				if (startTime == null || endTime == null) return;
-				ClipAPI.CreateClip(videoId, startTime, endTime)
-					.then(() => {
-						dataPromise = VideoAPI.GetVideoInfo(videoId, { clips: true, detail: true });
-					})
-					.catch(console.error);
-			}}>クリップ作成</Button
-		>
-
-		<Button
-			class="h-12 w-64"
-			onClick={() => {
-				endTime = player?.currentTime() ?? null;
-			}}>終了ピン {endTime != null ? formatTimes(endTime, 1) : 'なし'}</Button
-		>
+		<div class="flex w-64 flex-col gap-2">
+			<div class="flex w-full">
+				<InputTime bind:value={startTime} class="h-8 w-2/3 text-center	" />
+				<Button
+					class="h-8 w-1/3"
+					onClick={() => {
+						startTime = player?.currentTime() ?? null;
+					}}>開始ピン</Button
+				>
+			</div>
+			<Button
+				class="h-10 w-full"
+				onClick={() => {
+					if (startTime == null) return;
+					player?.currentTime(startTime);
+				}}>開始地点</Button
+			>
+		</div>
+		<div>
+			<Button
+				class="h-20 w-64 py-4"
+				disabled={endTime == null || startTime == null || endTime <= startTime}
+				onClick={() => {
+					if (startTime == null || endTime == null) return;
+					ClipAPI.CreateClip(videoId, startTime, endTime)
+						.then(() => {
+							dataPromise = VideoAPI.GetVideoInfo(videoId, { clips: true, detail: true });
+						})
+						.catch(console.error);
+				}}>クリップ作成</Button
+			>
+		</div>
+		<div class="flex w-64 flex-col gap-2">
+			<div class="flex w-full">
+				<InputTime bind:value={endTime} class="h-8 w-2/3 text-center" />
+				<Button
+					class="h-8 w-1/3"
+					onClick={() => {
+						endTime = player?.currentTime() ?? null;
+					}}>終了ピン {endTime != null ? formatTimes(endTime, { digits: 1 }) : 'なし'}</Button
+				>
+			</div>
+			<Button
+				class="h-10 w-full"
+				onClick={() => {
+					if (endTime == null) return;
+					player?.currentTime(endTime);
+				}}>終了地点</Button
+			>
+		</div>
 	</div>
 	<div></div>
 	<div class="text-lg font-semibold">既存クリップ {data?.clips?.length}件</div>

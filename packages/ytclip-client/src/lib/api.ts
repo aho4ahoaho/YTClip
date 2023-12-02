@@ -1,7 +1,7 @@
 import type { Video, VideoDetail, Clip } from '@ytclip/database';
 
 export const API_URL = (() => {
-	const u = import.meta.env.VITE_API_URL ?? window.location.origin + '/api';
+	const u = import.meta.env.VITE_API_URL ?? `${window.location.origin}/api`;
 	if (u.endsWith('/')) return u.substring(0, u.length - 1);
 	return u;
 })();

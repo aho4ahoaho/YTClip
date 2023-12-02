@@ -78,7 +78,6 @@ router.post("/create", async (req, res) => {
             processed: true,
         },
     });
-    console.log(duplicateClip);
 
     if (duplicateClip) {
         res.status(400).send("Clip already exists");
