@@ -14,7 +14,7 @@ services:
       - ./packages/ytclip-server/videos:/var/www/videos
       - ./packages/ytclip-client/:/var/www/client
     depends_on:
-      - db
+      - server
     networks:
       - app-network
 
@@ -23,8 +23,8 @@ services:
       dockerfile: packages/ytclip-server/Dockerfile
     container_name: ${CONTAINER_PREFIX}ytclip-server
     volumes:
-      - ./packages/ytclip-server/clips:/app/clips
-      - ./packages/ytclip-server/videos:/app/videos
+      - ./packages/ytclip-server/clips:/app/packages/ytclip-server/clips
+      - ./packages/ytclip-server/videos:/app/packages/ytclip-server/videos
     environment:
       - DATABASE_URL=mysql://root:${DB_PASSWORD}@db:3306/${CONTAINER_PREFIX}ytclip
     depends_on:
