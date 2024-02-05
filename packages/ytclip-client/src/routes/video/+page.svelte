@@ -27,7 +27,7 @@
 
 	let videoSources: Source[] = [];
 	$: dataPromise.then((d) => {
-		data = d;
+		data = { ...d };
 		const newSrc = getVideoURL(d.fileName);
 		if (videoSources.length !== newSrc.length) {
 			videoSources = newSrc;
@@ -61,12 +61,9 @@
 	{:else if data?.thumbnail}
 		<button
 			class="flex w-10/12 bg-black text-white transition-colors hover:bg-slate-700 hover:text-slate-200"
-			on:click={() => {
-				VideoAPI.SaveVideo(videoId)
-					.then(() => {
-						dataPromise = VideoAPI.GetVideoInfo(videoId, { clips: true, detail: true });
-					})
-					.catch(console.error);
+			on:click={async () => {
+				await VideoAPI.SaveVideo(videoId);
+				dataPromise = VideoAPI.GetVideoInfo(videoId, { clips: true, detail: true });
 			}}
 		>
 			<img class="w-full opacity-30" src={data.thumbnail} alt="thumbnail" />

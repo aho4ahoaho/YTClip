@@ -25,14 +25,13 @@ export const VideoAPI = {
 		}
 		return await res.json();
 	},
-	SaveVideo: async (videoId: string): Promise<ResponseVideo> => {
+	SaveVideo: async (videoId: string): Promise<void> => {
 		const url = new URL(`${API_URL}/video/download`);
 		url.searchParams.append('videoId', videoId);
 		const res = await fetch(url.href);
 		if (res.status !== 200) {
 			throw new Error(await res.text());
 		}
-		return await res.json();
 	},
 	GetVideoInfo: async (
 		videoId: string,
