@@ -18,17 +18,18 @@ enum ProcessStatus {
 }
 
 model Video {
-  id            Int           @id @default(autoincrement())
-  videoId       String        @unique @map("video_id")
-  processed     ProcessStatus @default(NoProcessed)
-  fileName      String?       @map("file_name")
-  title         String
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-  clips         Clip[]
-  thumbnail     String?       @map("thumbnail")
-  detail        VideoDetail?  @relation(fields: [videoDetailId], references: [id])
-  videoDetailId Int?
+  id               Int           @id @default(autoincrement())
+  videoId          String        @unique @map("video_id")
+  processed        ProcessStatus @default(NoProcessed)
+  fileName         String?       @map("file_name")
+  originalFileName String?       @map("original_file_name")
+  title            String
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  clips            Clip[]
+  thumbnail        String?       @map("thumbnail")
+  detail           VideoDetail?  @relation(fields: [videoDetailId], references: [id])
+  videoDetailId    Int?
 }
 
 model Clip {

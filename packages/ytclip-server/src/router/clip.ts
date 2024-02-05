@@ -87,7 +87,7 @@ router.post("/create", async (req, res) => {
         const newClip: Prisma.ClipCreateManyVideoInput = {
             start,
             end,
-            processed: ProcessStatus.Processing,
+            processed: ProcessStatus.NoProcessed,
         };
         const clipData = await prisma.video.update({
             where: {
@@ -131,7 +131,7 @@ router.get("/process", async (req, res) => {
             Video: {
                 select: {
                     videoId: true,
-                    fileName: true,
+                    originalFileName: true,
                 }
             },
         }
@@ -139,14 +139,24 @@ router.get("/process", async (req, res) => {
     if (clip?.processed !== ProcessStatus.NoProcessed) {
         res.status(400).send("Clip already processed");
         return;
-    } else if (!clip?.Video.fileName) {
+    } else if (!clip?.Video.originalFileName) {
         res.status(400).send("Clip not found");
         return;
     }
-    const { start, end, Video: { fileName, videoId } } = clip;
+
+    await prisma.clip.update({
+        where: {
+            id: clipId,
+        },
+        data: {
+            processed: ProcessStatus.Processing,
+        },
+    }).catch((e) => Logger.error(e));
+
+    const { start, end, Video: { videoId, originalFileName } } = clip;
 
     const clipName = `${videoId}_${start}-${end}.mp4`;
-    const videoPath = videoFileOrganizer.getPath(fileName);
+    const videoPath = videoFileOrganizer.getPath(originalFileName);
     const clipPath = clipFileOrganizer.getPath(clipName);
     Logger.debug(`Start converting ${clipName}...`);
     const ffmpegCmd = ffmpeg()

@@ -205,23 +205,28 @@ router.get("/download", async (req, res) => {
 
 
     Logger.log(`Starting ${videoInfo.videoDetails.title} download.`);
-    youtubeDl(url, videoPath).then(({ filepath }) => {
+    youtubeDl(url, videoPath).then(async ({ filepath }) => {
         Logger.log("yt-dlp", `${videoInfo.videoDetails.title} download finished.`);
-        const fileName = `${path.basename(filepath).split(".").slice(0, -1).join(".")}.mkv`;
+        const fileName = `${path.basename(filepath).split(".").slice(0, -1).join(".")}.mp4`;
         const dirName = path.dirname(filepath);
         const videoPath = path.join(dirName, fileName);
 
-        const convertPromise: Promise<string> = new Promise((resolve, reject) => {
-            ffmpeg(filepath).videoCodec("copy").audioCodec("aac").save(videoPath).on("end", () => {
-                fs.unlinkSync(filepath);
-                resolve(fileName);
+        const convertPromise: Promise<void> = new Promise((resolve, reject) => {
+            const ffmpegCmd = ffmpeg(filepath).videoCodec("libx264").audioCodec("aac").outputOption("-crf", "26", "-preset", "ultrafast").size("1280x?").output(videoPath).on("end", () => {
+                resolve();
             }).on("error", (err) => {
                 Logger.error("ffmpeg", err);
                 reject(err);
             });
+            AddQueueFFmpeg(ffmpegCmd)
+            ProcessFFmpeg();
         });
-        return convertPromise;
-    }).then((fileName) => {
+        await convertPromise;
+        return {
+            fileName: fileName,
+            originalFileName: path.basename(filepath),
+        }
+    }).then(({ fileName, originalFileName }) => {
         Logger.log("ffmpeg", `${videoId}.mp4 convert finished.`);
         return prisma.video.update({
             where: {
@@ -230,6 +235,7 @@ router.get("/download", async (req, res) => {
             data: {
                 processed: ProcessStatus.Processed,
                 fileName,
+                originalFileName,
             },
         });
     }).catch((err) => {

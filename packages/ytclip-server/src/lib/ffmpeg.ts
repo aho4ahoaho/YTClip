@@ -14,6 +14,7 @@ export const ProcessFFmpeg = async () => {
     if (isProcessing < 1) return;
     isProcessing--;
     while (queue.length > 0) {
+        Logger.info(`ProcessFFmpeg: ${queue.length}`);
         const cmd = queue.shift();
         if (!cmd) continue;
         cmd.run();
