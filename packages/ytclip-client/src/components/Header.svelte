@@ -15,6 +15,12 @@
 		on:submit={(elm) => {
 			elm.preventDefault();
 			if (url.length > 0) {
+				try {
+					new URL(url);
+				} catch {
+					//IDのみの場合
+					url = `https://youtu.be/${url}`;
+				}
 				VideoAPI.AddVideo(url)
 					.then(() => {
 						if (location.pathname === '/') {
