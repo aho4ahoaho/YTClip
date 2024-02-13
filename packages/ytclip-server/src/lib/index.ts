@@ -33,9 +33,8 @@ export const formatDate = (date: Date = new Date()) => {
     return `${date.getFullYear()}-${zeroPadding(date.getMonth() + 1, 2)}-${zeroPadding(date.getDate(), 2)}`;
 };
 
-
 /**
- * 
+ *
  * @param cmd 実行するコマンド
  * @returns stdout
  */
@@ -51,24 +50,18 @@ export const execAsync = (cmd: string): Promise<string> => {
     });
 };
 /**
- * 
+ *
  * @param url 保存する動画のURL
  * @param outputPath 保存先のパス、拡張子は付与される。
  * @returns {filepath: string, stdout: string} filepath: 保存したファイルのパス, stdout: yt-dlpの標準出力
  */
 export const youtubeDl = async (url: string, outputPath: string) => {
-    const cmd = [
-        "yt-dlp",
-        "--add-header Accept-Language:ja-JP",
-        "-o",
-        `"${outputPath}.%(ext)s"`,
-        url,
-    ];
+    const cmd = ["yt-dlp", "--add-header Accept-Language:ja-JP", "-o", `"${outputPath}.%(ext)s"`, url];
     //ファイルパスのみ取得
     const filepath = (await execAsync([...cmd, "--print", "filename"].join(" "))).trim();
     //ダウンロード
     const stdout = await execAsync(cmd.join(" "));
-    stdout
+    stdout;
     return {
         filepath,
         stdout,

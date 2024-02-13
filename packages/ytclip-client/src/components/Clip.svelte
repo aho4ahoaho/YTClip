@@ -4,7 +4,7 @@
 	import Button from './Button.svelte';
 	import { LocaleFormatTimes } from '$lib/time';
 	import { getClipURL } from '$lib/url';
-	import { ClipAPI } from '$lib/api';
+	import { client } from '$lib/api';
 	import type { MouseElementEventHandler } from '$lib/type';
 
 	export let clip: Pick<Clip, 'fileName' | 'processed' | 'start' | 'end' | 'id' | 'videoDataId'>;
@@ -39,7 +39,11 @@
 		<Button
 			class="ml-2 w-24"
 			onClick={() => {
-				ClipAPI.ProcessClip(clip.id).catch(console.error);
+				client.clip.process.get({
+					$query: {
+						clipId: clip.id
+					}
+				});
 			}}>切り出し</Button
 		>
 	{/if}
@@ -50,7 +54,7 @@
 		color="danger"
 		onClick={(event) => {
 			if (!videoId) return;
-			ClipAPI.DeleteClip(videoId, clip.id).catch(console.error);
+			client.clip.delete[videoId][clip.id].delete().catch(console.error);
 			onDelete?.(event);
 		}}
 		disabled={!videoId}>削除</Button

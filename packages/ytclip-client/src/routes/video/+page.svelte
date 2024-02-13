@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ClipAPI, VideoAPI, type ResponseVideo } from '$lib/api';
+	import { type ResponseVideo, client } from '$lib/api';
 	import { getVideoURL, type Source } from '$lib/url';
 	import type Player from 'video.js/dist/types/player';
 
@@ -17,8 +17,47 @@
 		window.location.href = '/';
 		throw new Error('No video id provided');
 	}
-	let dataPromise = VideoAPI.GetVideoInfo(videoId, { clips: true, detail: true });
 	let data: ResponseVideo | null = null;
+
+	const refetch = () => {
+		client.video.get[videoId]
+			.get({
+				$query: {
+					clips: 'true',
+					detail: 'true'
+				}
+			})
+			.then((d) => {
+				if (d.data && !('error' in d.data)) {
+					data = {
+						...d.data,
+						id: d.data.id ?? 0,
+						detail: d.data?.detail ?? undefined
+					};
+					return data;
+				}
+				if (d.data && 'error' in d.data) throw new Error(d.data.error);
+				throw new Error(d.error?.message ?? 'Unknown error');
+			})
+			.then((data) => {
+				const newSrc = getVideoURL(data.fileName);
+				if (videoSources.length !== newSrc.length) {
+					videoSources = newSrc;
+				} else {
+					let flag = false;
+					for (let i = 0; i < videoSources.length; i++) {
+						if (videoSources[i].src !== newSrc[i].src) {
+							flag = true;
+							break;
+						}
+					}
+					if (flag) {
+						videoSources = newSrc;
+					}
+				}
+			});
+	};
+	refetch();
 
 	let player: Player | null = null;
 
@@ -26,32 +65,14 @@
 	let endTime: number | null = null;
 
 	let videoSources: Source[] = [];
-	$: dataPromise.then((d) => {
-		data = { ...d };
-		const newSrc = getVideoURL(d.fileName);
-		if (videoSources.length !== newSrc.length) {
-			videoSources = newSrc;
-		} else {
-			let flag = false;
-			for (let i = 0; i < videoSources.length; i++) {
-				if (videoSources[i].src !== newSrc[i].src) {
-					flag = true;
-					break;
-				}
-			}
-			if (flag) {
-				videoSources = newSrc;
-			}
-		}
-	});
 </script>
 
 <svelte:head>
-	{#await dataPromise}
-		<title>YTClip - Loading...</title>
-	{:then data}
+	{#if data}
 		<title>YTClip - {data.title}</title>
-	{/await}
+	{:else}
+		<title>YTClip - Loading...</title>
+	{/if}
 </svelte:head>
 
 <div class="flex flex-col items-center">
@@ -62,8 +83,8 @@
 		<button
 			class="flex w-10/12 bg-black text-white transition-colors hover:bg-slate-700 hover:text-slate-200"
 			on:click={async () => {
-				await VideoAPI.SaveVideo(videoId);
-				dataPromise = VideoAPI.GetVideoInfo(videoId, { clips: true, detail: true });
+				await client.video.download.get({ $query: { videoId: videoId } });
+				refetch();
 			}}
 		>
 			<img class="w-full opacity-30" src={data.thumbnail} alt="thumbnail" />
@@ -102,10 +123,8 @@
 				disabled={endTime == null || startTime == null || endTime <= startTime}
 				onClick={() => {
 					if (startTime == null || endTime == null) return;
-					ClipAPI.CreateClip(videoId, startTime, endTime)
-						.then(() => {
-							dataPromise = VideoAPI.GetVideoInfo(videoId, { clips: true, detail: true });
-						})
+					client.clip.create[videoId]
+						.post({ $query: { start: startTime, end: endTime } })
 						.catch(console.error);
 				}}>クリップ作成</Button
 			>
@@ -139,15 +158,8 @@
 			<p class="w-24">長さ</p>
 			<p class="w-24">削除</p>
 		</div>
-		{#each data?.clips?.sort((a, b) => a.start - b.start) ?? [] as clip, index}
-			<Clip
-				{clip}
-				{player}
-				videoId={data?.videoId}
-				onDelete={() => {
-					dataPromise = VideoAPI.GetVideoInfo(videoId, { clips: true, detail: true });
-				}}
-			/>
+		{#each data?.clips?.sort((a, b) => a.start - b.start) ?? [] as clip}
+			<Clip {clip} {player} videoId={data?.videoId} onDelete={refetch} />
 		{/each}
 		{#if data?.clips?.length === 0}
 			<p class="text-lg">クリップがありません</p>

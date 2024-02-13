@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { VideoAPI, type ResponseVideo } from '$lib/api';
+	import { client } from '$lib/api';
 
 	import Button from '../components/Button.svelte';
 	import InputText from '../components/InputText.svelte';
@@ -8,15 +8,18 @@
 	import { onMount } from 'svelte';
 
 	let value = '';
-	let data: ResponseVideo | null = null;
 	let list: {
 		videoId: string;
 		title: string;
 		thumbnail: string | null;
 	}[] = [];
 	const onLoad = () => {
-		VideoAPI.GetVideoList().then((res) => {
-			list = res;
+		client.video.list.get().then((res) => {
+			if ('data' in res && res.data != null) {
+				list = res.data;
+			} else {
+				alert(res.error);
+			}
 		});
 	};
 	onMount(onLoad);
@@ -36,13 +39,11 @@
 		<Button
 			class="w-fit"
 			onClick={async () => {
-				const resData = await VideoAPI.AddVideo(value);
-				if (typeof resData === 'string') {
-					alert(resData);
-					data = null;
+				const data = client.video.add.get({ $query: { url: value } });
+				if ('error' in data) {
+					alert(data.error);
 				} else {
 					value = '';
-					data = resData;
 					onLoad();
 				}
 			}}>Submit</Button

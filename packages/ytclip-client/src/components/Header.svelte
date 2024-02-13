@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { VideoAPI } from '$lib/api';
+	import { client } from '$lib/api';
 	import Button from './Button.svelte';
 	import InputText from './InputText.svelte';
 
@@ -21,7 +21,8 @@
 					//IDのみの場合
 					url = `https://youtu.be/${url}`;
 				}
-				VideoAPI.AddVideo(url)
+				client.video.add
+					.get({ $query: { url } })
 					.then(() => {
 						if (location.pathname === '/') {
 							location.reload();

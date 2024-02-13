@@ -1,28 +1,29 @@
-import Express from "express";
+import { Elysia } from "elysia";
 import ClipRouter from "./src/router/clip";
 import VideoRouter from "./src/router/video";
+const port = process.env.PORT || 3000;
 
-const app = Express();
+const app = new Elysia()
+    .onRequest((data) => {
+        const req = data.request as Request;
+        console.log(req.method, req.url);
+        data.set.headers["Access-Control-Allow-Origin"] = "*";
+    })
+    .get("/", ({ request }) => {
+        return "Hello World!";
+    })
+    .use(ClipRouter)
+    .use(VideoRouter)
+    .listen(port, (server) => {
+        console.log(`Listening on port ${server.port}`);
+    });
 
-app.use(Express.json());
-app.use(Express.urlencoded({ extended: true }));
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    console.log(req.method, req.url);
-    next();
-});
+export type App = typeof app;
 
-app.get("/", (req, res) => {
-    res.send("Hello World!");
-});
-
+/*
 app.use("/clip", ClipRouter);
 app.use("/video", VideoRouter);
 
 app.use("/videos", Express.static("videos"));
 app.use("/clips", Express.static("clips"));
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
-});
+*/

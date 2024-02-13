@@ -1,13 +1,13 @@
 const VIDEO_URL = (() => {
 	const u = import.meta.env.VITE_VIDEO_URL ?? `${window.location.origin}/videos`;
 	if (u.endsWith('/')) return u.substring(0, u.length - 1);
-	return u
+	return u;
 })();
 
 const CLIP_URL = (() => {
 	const u = import.meta.env.VITE_CLIP_URL ?? `${window.location.origin}/clips`;
 	if (u.endsWith('/')) return u.substring(0, u.length - 1);
-	return u
+	return u;
 })();
 
 const hlsPattern = /.*\.(mp4|avi|aac|mp3|ogg|flac|dts)/;
