@@ -1,15 +1,16 @@
-# yt-clipper
-
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
+# YT-Clipper
+YouTubeの動画から切り抜きを作成するためのアプリケーションです。
 
 ```bash
-bun run index.ts
+cd packages/ytclip-proxy
+docker build -f Dockerfile.base -t nginx-vod .
+cd ../../
+touch .env
+docker compose up -d
 ```
 
-This project was created using `bun init` in bun v1.0.12. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## 環境変数
+| 変数名 | 説明 |
+| :-: | --- |
+|CONTAINER_PREFIX | 指定するとコンテナ名にプレフィックスが付く | 
+| DB_PASSWORD | データベースのパスワード |
